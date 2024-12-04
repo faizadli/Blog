@@ -17,6 +17,7 @@ import com.bumptech.glide.Glide;
 import com.example.blog.BlogPost;
 import com.example.blog.R;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class BlogAdapter extends RecyclerView.Adapter<BlogAdapter.BlogViewHolder> {
@@ -75,7 +76,7 @@ public class BlogAdapter extends RecyclerView.Adapter<BlogAdapter.BlogViewHolder
                 Bundle bundle = new Bundle();
                 bundle.putParcelable("blog_post", post);
                 Navigation.findNavController(v)
-                        .navigate(R.id.action_navigation_search_to_editFragment, bundle);
+                        .navigate(R.id.action_navigation_blog_to_editFragment, bundle);
             });
 
             holder.buttonDelete.setOnClickListener(v -> {
@@ -83,6 +84,9 @@ public class BlogAdapter extends RecyclerView.Adapter<BlogAdapter.BlogViewHolder
                     listener.onDeleteClick(post);
                 }
             });
+
+            // Disable click on the whole item when actions are shown
+            holder.itemView.setOnClickListener(null);
         } else {
             holder.layoutActions.setVisibility(View.GONE);
             holder.itemView.setOnClickListener(v -> {
@@ -99,8 +103,12 @@ public class BlogAdapter extends RecyclerView.Adapter<BlogAdapter.BlogViewHolder
     }
 
     public void updateData(List<BlogPost> newPosts) {
-        this.blogPosts = newPosts;
+        this.blogPosts = new ArrayList<>(newPosts);
         notifyDataSetChanged();
+    }
+
+    public List<BlogPost> getCurrentPosts() {
+        return new ArrayList<>(blogPosts);
     }
 
     static class BlogViewHolder extends RecyclerView.ViewHolder {

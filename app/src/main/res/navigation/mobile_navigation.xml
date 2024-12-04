@@ -21,25 +21,19 @@
     </fragment>
 
     <fragment
-        android:id="@+id/navigation_search"
+        android:id="@+id/navigation_blog"
         android:name="com.example.blog.ui.blog.BlogFragment"
         android:label="@string/title_blog"
         tools:layout="@layout/fragment_blog">
 
         <action
-            android:id="@+id/action_navigation_search_to_blogDetailFragment"
+            android:id="@+id/action_navigation_blog_to_blogDetailFragment"
             app:destination="@id/blogDetailFragment" />
 
         <action
-            android:id="@+id/action_navigation_search_to_editFragment"
+            android:id="@+id/action_navigation_blog_to_editFragment"
             app:destination="@id/editFragment" />
     </fragment>
-
-    <fragment
-        android:id="@+id/navigation_create"
-        android:name="com.example.blog.ui.create.CreateFragment"
-        android:label="@string/title_create"
-        tools:layout="@layout/fragment_create" />
 
     <fragment
         android:id="@+id/navigation_saved"
@@ -53,21 +47,20 @@
             app:enterAnim="@anim/nav_default_enter_anim"
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
-            app:popExitAnim="@anim/nav_default_pop_exit_anim"
-            app:popUpTo="@id/navigation_saved"
-            app:popUpToInclusive="false" />
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
+
+    <fragment
+        android:id="@+id/navigation_create"
+        android:name="com.example.blog.ui.create.CreateFragment"
+        android:label="@string/title_create"
+        tools:layout="@layout/fragment_create" />
 
     <fragment
         android:id="@+id/navigation_profile"
         android:name="com.example.blog.ui.profile.ProfileFragment"
         android:label="@string/title_profile"
-        tools:layout="@layout/fragment_profile">
-
-        <action
-            android:id="@+id/action_navigation_profile_to_editFragment"
-            app:destination="@id/editFragment" />
-    </fragment>
+        tools:layout="@layout/fragment_profile" />
 
     <fragment
         android:id="@+id/blogDetailFragment"

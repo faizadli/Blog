@@ -6,7 +6,6 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.example.blog.BlogPost;
 import com.example.blog.DatabaseHelper;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,11 +15,13 @@ public class BlogViewModel extends AndroidViewModel {
     private final MutableLiveData<List<BlogPost>> filteredPosts;
     private List<BlogPost> allPosts;
     private long userId;
+    private String lastSearchTerm;
 
     public BlogViewModel(Application application) {
         super(application);
         databaseHelper = new DatabaseHelper(application);
         filteredPosts = new MutableLiveData<>();
+        allPosts = new ArrayList<>();
     }
 
     public void setUserId(long userId) {
@@ -28,21 +29,24 @@ public class BlogViewModel extends AndroidViewModel {
         loadUserPosts();
     }
 
-    private void loadUserPosts() {
+    public void loadUserPosts() {
         try {
             databaseHelper.open();
             allPosts = databaseHelper.getUserBlogPosts(userId);
-            filteredPosts.setValue(allPosts);
+            // Refresh dengan search term terakhir
+            searchPosts(lastSearchTerm != null ? lastSearchTerm : "");
         } catch (Exception e) {
             e.printStackTrace();
             allPosts = new ArrayList<>();
+            filteredPosts.setValue(allPosts);
         } finally {
             databaseHelper.close();
         }
     }
 
     public void searchPosts(String query) {
-        if (query.isEmpty()) {
+        lastSearchTerm = query;
+        if (query == null || query.isEmpty()) {
             filteredPosts.setValue(allPosts);
             return;
         }

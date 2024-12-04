@@ -9,6 +9,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -21,6 +22,7 @@ import com.example.blog.R;
 import com.example.blog.databinding.FragmentBlogBinding;
 import com.example.blog.ui.home.BlogAdapter;
 import java.util.ArrayList;
+import java.util.List;
 
 public class BlogFragment extends Fragment {
     private FragmentBlogBinding binding;
@@ -36,38 +38,17 @@ public class BlogFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentBlogBinding.inflate(inflater, container, false);
-        View root = binding.getRoot();
-
-        // Initialize
-        blogViewModel = new ViewModelProvider(this).get(BlogViewModel.class);
-        databaseHelper = new DatabaseHelper(requireContext());
-        databaseHelper.open();
-
-        // Get user ID
-        sharedPreferences = requireContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        userId = sharedPreferences.getLong(KEY_USER_ID, -1);
-
-        setupRecyclerView();
-        setupSearchListener();
-
-        blogViewModel.getFilteredPosts().observe(getViewLifecycleOwner(), posts -> {
-            if (posts == null || posts.isEmpty()) {
-                binding.textNoResults.setVisibility(View.VISIBLE);
-                binding.recyclerSearchResults.setVisibility(View.GONE);
-            } else {
-                binding.textNoResults.setVisibility(View.GONE);
-                binding.recyclerSearchResults.setVisibility(View.VISIBLE);
-                blogAdapter.updateData(posts);
-            }
-        });
-
-        return root;
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         blogViewModel = new ViewModelProvider(this).get(BlogViewModel.class);
+
+        // Initialize database
+        databaseHelper = new DatabaseHelper(requireContext());
+        databaseHelper.open();
 
         // Get user ID
         sharedPreferences = requireContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -77,16 +58,7 @@ public class BlogFragment extends Fragment {
         setupRecyclerView();
         setupSearchListener();
 
-        blogViewModel.getFilteredPosts().observe(getViewLifecycleOwner(), posts -> {
-            if (posts == null || posts.isEmpty()) {
-                binding.textNoResults.setVisibility(View.VISIBLE);
-                binding.recyclerSearchResults.setVisibility(View.GONE);
-            } else {
-                binding.textNoResults.setVisibility(View.GONE);
-                binding.recyclerSearchResults.setVisibility(View.VISIBLE);
-                blogAdapter.updateData(posts);
-            }
-        });
+        blogViewModel.getFilteredPosts().observe(getViewLifecycleOwner(), this::displayPosts);
     }
 
     private void setupRecyclerView() {
@@ -96,7 +68,7 @@ public class BlogFragment extends Fragment {
                 Bundle bundle = new Bundle();
                 bundle.putParcelable("blog_post", blogPost);
                 Navigation.findNavController(requireView())
-                        .navigate(R.id.action_navigation_search_to_blogDetailFragment, bundle);
+                        .navigate(R.id.action_navigation_blog_to_blogDetailFragment, bundle);
             }
 
             @Override
@@ -105,7 +77,7 @@ public class BlogFragment extends Fragment {
                     showDeleteConfirmation(blogPost);
                 }
             }
-        }, true); // Set showActions to true
+        }, true);
 
         binding.recyclerSearchResults.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerSearchResults.setAdapter(blogAdapter);
@@ -116,13 +88,31 @@ public class BlogFragment extends Fragment {
                 .setMessage("Are you sure you want to delete this post?")
                 .setPositiveButton("Delete", (dialog, which) -> {
                     if (databaseHelper.deletePost(post.getId())) {
-                        // Refresh search results
-                        String currentSearch = binding.editSearch.getText().toString();
-                        blogViewModel.searchPosts(currentSearch);
+                        // Update local list and UI
+                        List<BlogPost> currentPosts = new ArrayList<>(blogAdapter.getCurrentPosts());
+                        currentPosts.remove(post);
+                        displayPosts(currentPosts);
+
+                        // Refresh data in ViewModel
+                        blogViewModel.loadUserPosts();
+                        Toast.makeText(requireContext(), "Post deleted successfully", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(requireContext(), "Failed to delete post", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private void displayPosts(List<BlogPost> posts) {
+        if (posts == null || posts.isEmpty()) {
+            binding.textNoResults.setVisibility(View.VISIBLE);
+            binding.recyclerSearchResults.setVisibility(View.GONE);
+        } else {
+            binding.textNoResults.setVisibility(View.GONE);
+            binding.recyclerSearchResults.setVisibility(View.VISIBLE);
+            blogAdapter.updateData(posts);
+        }
     }
 
     private void setupSearchListener() {
@@ -143,8 +133,7 @@ public class BlogFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        String currentSearch = binding.editSearch.getText().toString();
-        blogViewModel.searchPosts(currentSearch);
+        blogViewModel.loadUserPosts();
     }
 
     @Override
