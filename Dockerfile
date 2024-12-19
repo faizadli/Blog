@@ -4,7 +4,8 @@ FROM openjdk:11-jdk
 RUN apt-get update && apt-get install -y \
     curl \
     unzip \
-    gradle
+    gradle \
+    bash
 
 # Install Android SDK
 ENV ANDROID_HOME=/opt/android-sdk \
@@ -30,6 +31,9 @@ RUN sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
 WORKDIR /app
 COPY . .
+
+# Tambahkan ini sebelum CMD
+RUN chmod +x ./gradlew
 
 # Build command
 CMD ["./gradlew", "assembleDebug"]

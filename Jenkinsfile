@@ -11,6 +11,14 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+                // Fix line endings for gradlew
+                bat 'git update-index --chmod=+x gradlew'
+                bat '''
+                    @echo off
+                    copy gradlew gradlew.tmp /Y
+                    type gradlew.tmp | find /v /n "" > gradlew
+                    del gradlew.tmp
+                '''
             }
         }
         
@@ -28,7 +36,11 @@ pipeline {
             steps {
                 script {
                     bat """
-                        docker run --rm -v "${WORKSPACE_PATH}:/app" -w /app ${DOCKER_IMAGE}:${DOCKER_TAG} ./gradlew test
+                        docker run --rm ^
+                        -v "%WORKSPACE_PATH%:/app" ^
+                        -w /app ^
+                        ${DOCKER_IMAGE}:${DOCKER_TAG} ^
+                        bash -c "./gradlew test"
                     """
                 }
             }
@@ -38,7 +50,11 @@ pipeline {
             steps {
                 script {
                     bat """
-                        docker run --rm -v "${WORKSPACE_PATH}:/app" -w /app ${DOCKER_IMAGE}:${DOCKER_TAG} ./gradlew assembleDebug
+                        docker run --rm ^
+                        -v "%WORKSPACE_PATH%:/app" ^
+                        -w /app ^
+                        ${DOCKER_IMAGE}:${DOCKER_TAG} ^
+                        bash -c "./gradlew assembleDebug"
                     """
                 }
             }
