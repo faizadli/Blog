@@ -25,7 +25,7 @@ pipeline {
             steps {
                 script {
                     docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside {
-                        sh './gradlew test'
+                        bat 'gradlew test'
                     }
                 }
             }
@@ -35,7 +35,7 @@ pipeline {
             steps {
                 script {
                     docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside {
-                        sh './gradlew assembleDebug'
+                        bat 'gradlew assembleDebug'
                     }
                 }
             }
@@ -51,7 +51,7 @@ pipeline {
     post {
         failure {
             echo "Pipeline failed. Error log:"
-            sh "docker logs ${DOCKER_IMAGE}"
+            bat 'docker logs %DOCKER_IMAGE%'
         }
         always {
             cleanWs()
