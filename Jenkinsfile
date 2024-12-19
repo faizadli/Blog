@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'blog-android'
         DOCKER_TAG = 'latest'
+        WORKSPACE_PATH = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\Blog-Android'
     }
     
     stages {
@@ -16,7 +17,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}", "--cache-from ${DOCKER_IMAGE}:${DOCKER_TAG} .")
+                    bat """
+                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                    """
                 }
             }
         }
@@ -24,9 +27,9 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside("-v /c/ProgramData/Jenkins/.jenkins/workspace/Blog-Android:/app") {
-                        bat 'gradlew test'
-                    }
+                    bat """
+                        docker run --rm -v "${WORKSPACE_PATH}:/app" -w /app ${DOCKER_IMAGE}:${DOCKER_TAG} ./gradlew test
+                    """
                 }
             }
         }
@@ -34,9 +37,9 @@ pipeline {
         stage('Build APK') {
             steps {
                 script {
-                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside("-v /c/ProgramData/Jenkins/.jenkins/workspace/Blog-Android:/app") {
-                        bat 'gradlew assembleDebug'
-                    }
+                    bat """
+                        docker run --rm -v "${WORKSPACE_PATH}:/app" -w /app ${DOCKER_IMAGE}:${DOCKER_TAG} ./gradlew assembleDebug
+                    """
                 }
             }
         }
@@ -50,8 +53,13 @@ pipeline {
     
     post {
         failure {
-            echo "Pipeline failed. Error log:"
-            bat 'docker logs %DOCKER_IMAGE%'
+            echo 'Pipeline failed. Error log:'
+            script {
+                bat """
+                    docker ps -a
+                    docker logs ${DOCKER_IMAGE} || echo "No container logs available"
+                """
+            }
         }
         always {
             cleanWs()
