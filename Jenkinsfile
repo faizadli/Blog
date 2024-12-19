@@ -16,7 +16,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}", "--cache-from ${DOCKER_IMAGE}:${DOCKER_TAG} .")
                 }
             }
         }
@@ -49,6 +49,10 @@ pipeline {
     }
     
     post {
+        failure {
+            echo "Pipeline failed. Error log:"
+            sh "docker logs ${DOCKER_IMAGE}"
+        }
         always {
             cleanWs()
         }
