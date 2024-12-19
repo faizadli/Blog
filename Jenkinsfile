@@ -10,7 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Checkout dari GitHub
-                git branch: 'main',
+                git branch: 'master',
                     url: 'https://github.com/faizadli/Blog.git'
             }
         }
