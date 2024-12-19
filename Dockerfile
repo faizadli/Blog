@@ -2,18 +2,18 @@ FROM openjdk:11-jdk
 
 # Install required packages
 RUN apt-get update && apt-get install -y \
-    wget \
+    curl \
     unzip \
     gradle
 
 # Install Android SDK
 ENV ANDROID_HOME /opt/android-sdk
-ENV ANDROID_SDK_URL https://dl.google.com/android/repository/commandlinetools-linux-latest.zip
+ENV ANDROID_SDK_URL https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
 
 # Download and setup Android SDK
 RUN mkdir -p ${ANDROID_HOME}/cmdline-tools
 WORKDIR ${ANDROID_HOME}/cmdline-tools
-RUN wget -q ${ANDROID_SDK_URL} -O android_tools.zip
+RUN curl -q ${ANDROID_SDK_URL} -O android_tools.zip
 RUN unzip android_tools.zip
 RUN mv cmdline-tools latest
 RUN rm android_tools.zip
