@@ -24,7 +24,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside {
+                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside("-v /c/ProgramData/Jenkins/.jenkins/workspace/Blog-Android:/app") {
                         bat 'gradlew test'
                     }
                 }
@@ -34,7 +34,7 @@ pipeline {
         stage('Build APK') {
             steps {
                 script {
-                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside {
+                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside("-v /c/ProgramData/Jenkins/.jenkins/workspace/Blog-Android:/app") {
                         bat 'gradlew assembleDebug'
                     }
                 }
