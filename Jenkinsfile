@@ -11,13 +11,14 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                // Fix line endings for gradlew
-                bat 'git update-index --chmod=+x gradlew'
+                // Fix gradlew line endings
                 bat '''
                     @echo off
-                    copy gradlew gradlew.tmp /Y
-                    type gradlew.tmp | find /v /n "" > gradlew
-                    del gradlew.tmp
+                    git update-index --chmod=+x gradlew
+                    dos2unix gradlew || echo "Continuing without dos2unix"
+                    
+                    REM If dos2unix is not available, use PowerShell to fix line endings
+                    powershell -Command "(Get-Content gradlew) | ForEach-Object { $_ -replace \\"\\r\\",\\"\\" } | Set-Content gradlew -NoNewline"
                 '''
             }
         }
@@ -25,9 +26,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    bat """
-                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
-                    """
+                    bat '''
+                        docker build -t blog-android:latest . --no-cache
+                    '''
                 }
             }
         }
@@ -35,13 +36,13 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    bat """
+                    bat '''
                         docker run --rm ^
-                        -v "%WORKSPACE_PATH%:/app" ^
+                        -v "%CD%:/app" ^
                         -w /app ^
-                        ${DOCKER_IMAGE}:${DOCKER_TAG} ^
-                        bash -c "./gradlew test"
-                    """
+                        blog-android:latest ^
+                        sh -c "dos2unix gradlew && chmod +x gradlew && ./gradlew test"
+                    '''
                 }
             }
         }
@@ -49,13 +50,13 @@ pipeline {
         stage('Build APK') {
             steps {
                 script {
-                    bat """
+                    bat '''
                         docker run --rm ^
-                        -v "%WORKSPACE_PATH%:/app" ^
+                        -v "%CD%:/app" ^
                         -w /app ^
-                        ${DOCKER_IMAGE}:${DOCKER_TAG} ^
-                        bash -c "./gradlew assembleDebug"
-                    """
+                        blog-android:latest ^
+                        sh -c "dos2unix gradlew && chmod +x gradlew && ./gradlew assembleDebug"
+                    '''
                 }
             }
         }
@@ -71,10 +72,10 @@ pipeline {
         failure {
             echo 'Pipeline failed. Error log:'
             script {
-                bat """
+                bat '''
                     docker ps -a
-                    docker logs ${DOCKER_IMAGE} || echo "No container logs available"
-                """
+                    docker logs %DOCKER_IMAGE% || echo "No container logs available"
+                '''
             }
         }
         always {

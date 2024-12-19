@@ -5,7 +5,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     gradle \
-    bash
+    bash \
+    dos2unix
 
 # Install Android SDK
 ENV ANDROID_HOME=/opt/android-sdk \
@@ -32,8 +33,8 @@ RUN sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 WORKDIR /app
 COPY . .
 
-# Tambahkan ini sebelum CMD
-RUN chmod +x ./gradlew
+# Ensure gradlew has correct permissions and line endings
+RUN dos2unix gradlew && chmod +x gradlew
 
 # Build command
 CMD ["./gradlew", "assembleDebug"]
