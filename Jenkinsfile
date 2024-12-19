@@ -1,40 +1,56 @@
 pipeline {
     agent any
     
-    tools {
-        jdk 'jdk-17'
-        gradle 'gradle'
+    environment {
+        DOCKER_IMAGE = 'blog-android'
+        DOCKER_TAG = 'latest'
     }
     
     stages {
         stage('Checkout') {
             steps {
-                // Checkout dari GitHub
-                git branch: 'master',
-                    url: 'https://github.com/faizadli/Blog.git'
+                checkout scm
             }
         }
         
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
-                bat './gradlew clean assembleDebug'
+                script {
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                }
             }
         }
         
-        stage('Test') {
+        stage('Run Tests') {
             steps {
-                // Run unit tests
-                sh './gradlew test'
+                script {
+                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside {
+                        sh './gradlew test'
+                    }
+                }
+            }
+        }
+        
+        stage('Build APK') {
+            steps {
+                script {
+                    docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside {
+                        sh './gradlew assembleDebug'
+                    }
+                }
+            }
+        }
+        
+        stage('Archive APK') {
+            steps {
+                archiveArtifacts artifacts: '**/build/outputs/apk/debug/*.apk', fingerprint: true
             }
         }
     }
     
     post {
-        success {
-            echo 'Build successful!'
-        }
-        failure {
-            echo 'Build failed!'
+        always {
+            cleanWs()
         }
     }
 }
