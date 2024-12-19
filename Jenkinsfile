@@ -17,8 +17,7 @@ pipeline {
         
         stage('Build') {
             steps {
-                // Build Android project
-                sh './gradlew clean assembleDebug'
+                bat './gradlew clean assembleDebug'
             }
         }
         
