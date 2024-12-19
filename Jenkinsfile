@@ -25,7 +25,7 @@ pipeline {
             steps {
                 script {
                     docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside("-v /c/ProgramData/Jenkins/.jenkins/workspace/Blog-Android:/app -w /app") {
-                        bat './gradlew test'
+                        bat 'gradlew test'
                     }
                 }
             }
@@ -35,7 +35,7 @@ pipeline {
             steps {
                 script {
                     docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").inside("-v /c/ProgramData/Jenkins/.jenkins/workspace/Blog-Android:/app -w /app") {
-                        bat './gradlew assembleDebug'
+                        bat 'gradlew assembleDebug'
                     }
                 }
             }
