@@ -1,4 +1,4 @@
-FROM openjdk:11-jdk
+FROM eclipse-temurin:17-jdk
 
 # Install required packages
 RUN apt-get update && apt-get install -y \
