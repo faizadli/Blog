@@ -10,8 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                // Fix permissions
-                bat 'icacls gradlew /grant Everyone:F'
+                bat 'dir'  // Debug: list files
             }
         }
         
@@ -27,12 +26,14 @@ pipeline {
             steps {
                 script {
                     bat '''
+                        echo "Current directory:"
+                        dir
+                        echo "Running tests..."
                         docker run --rm ^
                         -v "%CD%":/app ^
                         -w /app ^
-                        -e GRADLE_USER_HOME=/app/.gradle ^
                         blog-android:latest ^
-                        ./gradlew test --info
+                        ./gradlew test --stacktrace
                     '''
                 }
             }
@@ -42,12 +43,12 @@ pipeline {
             steps {
                 script {
                     bat '''
+                        echo "Building APK..."
                         docker run --rm ^
                         -v "%CD%":/app ^
                         -w /app ^
-                        -e GRADLE_USER_HOME=/app/.gradle ^
                         blog-android:latest ^
-                        ./gradlew assembleDebug --info
+                        ./gradlew assembleDebug --stacktrace
                     '''
                 }
             }
@@ -56,10 +57,12 @@ pipeline {
         stage('Archive APK') {
             steps {
                 script {
-                    bat 'dir /s /b "**/build/outputs/apk/debug/*.apk"'
+                    bat '''
+                        echo "Checking for APK files..."
+                        dir /s build\\outputs\\apk\\debug\\*.apk
+                    '''
                     archiveArtifacts(
                         artifacts: '**/build/outputs/apk/debug/*.apk',
-                        fingerprint: true,
                         allowEmptyArchive: true
                     )
                 }
@@ -73,10 +76,10 @@ pipeline {
             cleanWs()
         }
         failure {
-            echo 'Pipeline failed'
-        }
-        success {
-            echo 'Pipeline succeeded'
+            script {
+                echo 'Pipeline failed'
+                bat 'docker logs ${DOCKER_IMAGE} || echo "No logs available"'
+            }
         }
     }
 }
