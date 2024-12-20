@@ -4,7 +4,8 @@ FROM openjdk:11-jdk
 RUN apt-get update && apt-get install -y \
     curl \
     unzip \
-    gradle
+    gradle \
+    dos2unix
 
 # Install Android SDK
 ENV ANDROID_HOME=/opt/android-sdk \
@@ -30,7 +31,7 @@ RUN sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 WORKDIR /app
 COPY . .
 
-# Set permissions
-RUN chmod +x gradlew
+# Fix line endings and permissions
+RUN dos2unix gradlew && chmod +x gradlew
 
 CMD ["./gradlew", "assembleDebug"]
