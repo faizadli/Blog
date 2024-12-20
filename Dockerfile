@@ -14,10 +14,10 @@ ENV ANDROID_HOME=/opt/android-sdk \
 # Download and setup Android SDK
 RUN mkdir -p ${ANDROID_HOME}/cmdline-tools
 WORKDIR ${ANDROID_HOME}/cmdline-tools
-RUN curl -sSL ${ANDROID_SDK_URL} -o android_tools.zip
-RUN unzip android_tools.zip
-RUN mv cmdline-tools latest
-RUN rm android_tools.zip
+RUN curl -sSL ${ANDROID_SDK_URL} -o android_tools.zip && \
+    unzip android_tools.zip && \
+    mv cmdline-tools latest && \
+    rm android_tools.zip
 
 # Set PATH
 ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools
@@ -29,9 +29,7 @@ RUN yes | sdkmanager --licenses
 RUN sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
 WORKDIR /app
-COPY . .
 
-# Fix line endings and permissions
-RUN dos2unix gradlew && chmod +x gradlew
-
-CMD ["./gradlew", "assembleDebug"]
+# Set entrypoint to ensure proper shell execution
+ENTRYPOINT ["/bin/sh", "-c"]
+CMD ["./gradlew assembleDebug"]

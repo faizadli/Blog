@@ -10,9 +10,11 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                // Fix permissions for Windows
-                bat 'git update-index --chmod=+x gradlew'
-                bat 'icacls gradlew /grant Everyone:F'
+                // Convert line endings and fix permissions
+                bat '''
+                    git config --global core.autocrlf input
+                    git checkout .
+                '''
             }
         }
         
@@ -20,6 +22,21 @@ pipeline {
             steps {
                 script {
                     bat 'docker build -t blog-android:latest . --no-cache'
+                }
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                script {
+                    bat '''
+                        docker run --rm ^
+                        -v "%CD%:/app" ^
+                        -w /app ^
+                        --user root ^
+                        blog-android:latest ^
+                        sh -c "./gradlew --no-daemon test"
+                    '''
                 }
             }
         }
@@ -33,7 +50,7 @@ pipeline {
                         -w /app ^
                         --user root ^
                         blog-android:latest ^
-                        bash -c "./gradlew assembleDebug"
+                        sh -c "./gradlew --no-daemon assembleDebug"
                     '''
                 }
             }
