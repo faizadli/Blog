@@ -29,8 +29,13 @@ RUN sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
 WORKDIR /app
 
+RUN mkdir -p /root/.gradle && \
+    chmod -R 777 /root/.gradle
+
 # Make gradlew executable
 RUN mkdir -p .gradle && \
     chmod -R 777 .gradle
+
+RUN chmod +x ./gradlew || true
 
 CMD ["./gradlew", "assembleDebug"]

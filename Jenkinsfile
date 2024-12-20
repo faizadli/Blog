@@ -46,9 +46,16 @@ pipeline {
                         echo "Building APK..."
                         docker run --rm ^
                         -v "%CD%":/app ^
+                        -v "%CD%/.gradle:/root/.gradle" ^
                         -w /app ^
                         blog-android:latest ^
-                        ./gradlew assembleDebug --stacktrace
+                        ./gradlew assembleDebug --info --stacktrace
+                    '''
+                    
+                    // Debug: List direktori setelah build
+                    bat '''
+                        echo "Listing directory structure:"
+                        dir /s
                     '''
                 }
             }
@@ -59,11 +66,12 @@ pipeline {
                 script {
                     bat '''
                         echo "Checking for APK files..."
-                        dir /s build\\outputs\\apk\\debug\\*.apk
+                        dir /s *.apk
                     '''
                     archiveArtifacts(
-                        artifacts: '**/build/outputs/apk/debug/*.apk',
-                        allowEmptyArchive: true
+                        artifacts: '**/*.apk',
+                        fingerprint: true,
+                        allowEmptyArchive: false
                     )
                 }
             }
@@ -78,7 +86,12 @@ pipeline {
         failure {
             script {
                 echo 'Pipeline failed'
-                bat 'docker logs ${DOCKER_IMAGE} || echo "No logs available"'
+                bat '''
+                    echo "Listing running containers:"
+                    docker ps
+                    echo "Listing all containers:"
+                    docker ps -a
+                '''
             }
         }
     }
