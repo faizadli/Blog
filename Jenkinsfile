@@ -10,11 +10,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                // Convert line endings and fix permissions
-                bat '''
-                    git config --global core.autocrlf input
-                    git checkout .
-                '''
+                // Fix permissions
+                bat 'icacls gradlew /grant Everyone:F'
             }
         }
         
@@ -31,11 +28,11 @@ pipeline {
                 script {
                     bat '''
                         docker run --rm ^
-                        -v "%CD%:/app" ^
+                        -v "%CD%":/app ^
                         -w /app ^
-                        --user root ^
+                        -e GRADLE_USER_HOME=/app/.gradle ^
                         blog-android:latest ^
-                        sh -c "./gradlew --no-daemon test"
+                        ./gradlew test --info
                     '''
                 }
             }
@@ -46,11 +43,11 @@ pipeline {
                 script {
                     bat '''
                         docker run --rm ^
-                        -v "%CD%:/app" ^
+                        -v "%CD%":/app ^
                         -w /app ^
-                        --user root ^
+                        -e GRADLE_USER_HOME=/app/.gradle ^
                         blog-android:latest ^
-                        sh -c "./gradlew --no-daemon assembleDebug"
+                        ./gradlew assembleDebug --info
                     '''
                 }
             }
@@ -58,17 +55,28 @@ pipeline {
         
         stage('Archive APK') {
             steps {
-                archiveArtifacts artifacts: '**/build/outputs/apk/debug/*.apk', fingerprint: true
+                script {
+                    bat 'dir /s /b "**/build/outputs/apk/debug/*.apk"'
+                    archiveArtifacts(
+                        artifacts: '**/build/outputs/apk/debug/*.apk',
+                        fingerprint: true,
+                        allowEmptyArchive: true
+                    )
+                }
             }
         }
     }
     
     post {
+        always {
+            echo 'Cleaning workspace...'
+            cleanWs()
+        }
         failure {
             echo 'Pipeline failed'
         }
-        always {
-            cleanWs()
+        success {
+            echo 'Pipeline succeeded'
         }
     }
 }
