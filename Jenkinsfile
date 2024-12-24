@@ -10,7 +10,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                bat 'dir'
+                bat 'attrib -R gradlew'
+                bat 'icacls gradlew /grant Everyone:F'
             }
         }
         
@@ -26,14 +27,11 @@ pipeline {
             steps {
                 script {
                     bat '''
-                        echo "Current directory:"
-                        dir
-                        echo "Running tests..."
                         docker run --rm ^
                         -v "%CD%":/app ^
                         -w /app ^
                         blog-android:latest ^
-                        /bin/bash -c "chmod +x ./gradlew && ./gradlew test --stacktrace"
+                        /bin/bash -c "dos2unix ./gradlew && ./gradlew test --stacktrace"
                     '''
                 }
             }
@@ -43,18 +41,12 @@ pipeline {
             steps {
                 script {
                     bat '''
-                        echo "Building APK..."
                         docker run --rm ^
                         -v "%CD%":/app ^
                         -v "%CD%/.gradle:/root/.gradle" ^
                         -w /app ^
                         blog-android:latest ^
-                        /bin/bash -c "chmod +x ./gradlew && ./gradlew assembleDebug --info --stacktrace"
-                    '''
-                    
-                    bat '''
-                        echo "Listing directory structure:"
-                        dir /s
+                        /bin/bash -c "dos2unix ./gradlew && ./gradlew assembleDebug --info"
                     '''
                 }
             }
@@ -62,35 +54,22 @@ pipeline {
         
         stage('Archive APK') {
             steps {
-                script {
-                    bat '''
-                        echo "Checking for APK files..."
-                        dir /s *.apk
-                    '''
-                    archiveArtifacts(
-                        artifacts: '**/*.apk',
-                        fingerprint: true,
-                        allowEmptyArchive: false
-                    )
-                }
+                archiveArtifacts(
+                    artifacts: '**/*.apk',
+                    fingerprint: true,
+                    allowEmptyArchive: false
+                )
             }
         }
     }
     
     post {
         always {
-            echo 'Cleaning workspace...'
             cleanWs()
         }
         failure {
             script {
-                echo 'Pipeline failed'
-                bat '''
-                    echo "Listing running containers:"
-                    docker ps
-                    echo "Listing all containers:" 
-                    docker ps -a
-                '''
+                bat 'docker ps && docker ps -a'
             }
         }
     }
