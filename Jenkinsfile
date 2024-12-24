@@ -10,8 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                bat 'attrib -R gradlew'
-                bat 'icacls gradlew /grant Everyone:F'
+                bat 'dir'  // Debug: list files
             }
         }
         
@@ -27,6 +26,9 @@ pipeline {
             steps {
                 script {
                     bat '''
+                        echo "Current directory:"
+                        dir
+                        echo "Running tests..."
                         docker run --rm ^
                         -v "%CD%":/app ^
                         -w /app ^
@@ -41,12 +43,19 @@ pipeline {
             steps {
                 script {
                     bat '''
+                        echo "Building APK..."
                         docker run --rm ^
                         -v "%CD%":/app ^
                         -v "%CD%/.gradle:/root/.gradle" ^
                         -w /app ^
                         blog-android:latest ^
-                        ./gradlew assembleDebug --info
+                        ./gradlew assembleDebug --info --stacktrace
+                    '''
+                    
+                    // Debug: List direktori setelah build
+                    bat '''
+                        echo "Listing directory structure:"
+                        dir /s
                     '''
                 }
             }
@@ -54,22 +63,35 @@ pipeline {
         
         stage('Archive APK') {
             steps {
-                archiveArtifacts(
-                    artifacts: '**/*.apk',
-                    fingerprint: true,
-                    allowEmptyArchive: false
-                )
+                script {
+                    bat '''
+                        echo "Checking for APK files..."
+                        dir /s *.apk
+                    '''
+                    archiveArtifacts(
+                        artifacts: '**/*.apk',
+                        fingerprint: true,
+                        allowEmptyArchive: false
+                    )
+                }
             }
         }
     }
     
     post {
         always {
+            echo 'Cleaning workspace...'
             cleanWs()
         }
         failure {
             script {
-                bat 'docker ps && docker ps -a'
+                echo 'Pipeline failed'
+                bat '''
+                    echo "Listing running containers:"
+                    docker ps
+                    echo "Listing all containers:"
+                    docker ps -a
+                '''
             }
         }
     }
