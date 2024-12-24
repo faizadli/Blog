@@ -43,10 +43,9 @@ pipeline {
                     bat '''
                         docker run --rm ^
                         -v "%CD%":/app ^
-                        -v "%CD%/.gradle:/root/.gradle" ^
                         -w /app ^
                         blog-android:latest ^
-                        ./gradlew assembleDebug --info
+                        gradlew assembleDebug --info
                     '''
                 }
             }
