@@ -31,7 +31,7 @@ pipeline {
                         -v "%CD%":/app ^
                         -w /app ^
                         blog-android:latest ^
-                        /bin/bash -c "dos2unix ./gradlew && ./gradlew test --stacktrace"
+                        ./gradlew test --stacktrace
                     '''
                 }
             }
@@ -46,7 +46,7 @@ pipeline {
                         -v "%CD%/.gradle:/root/.gradle" ^
                         -w /app ^
                         blog-android:latest ^
-                        /bin/bash -c "dos2unix ./gradlew && ./gradlew assembleDebug --info"
+                        ./gradlew assembleDebug --info
                     '''
                 }
             }
