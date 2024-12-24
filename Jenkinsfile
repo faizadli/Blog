@@ -10,7 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                bat 'dir'  // Debug: list files
+                bat 'dir'
             }
         }
         
@@ -33,7 +33,7 @@ pipeline {
                         -v "%CD%":/app ^
                         -w /app ^
                         blog-android:latest ^
-                        ./gradlew test --stacktrace
+                        /bin/bash -c "chmod +x ./gradlew && ./gradlew test --stacktrace"
                     '''
                 }
             }
@@ -49,10 +49,9 @@ pipeline {
                         -v "%CD%/.gradle:/root/.gradle" ^
                         -w /app ^
                         blog-android:latest ^
-                        ./gradlew assembleDebug --info --stacktrace
+                        /bin/bash -c "chmod +x ./gradlew && ./gradlew assembleDebug --info --stacktrace"
                     '''
                     
-                    // Debug: List direktori setelah build
                     bat '''
                         echo "Listing directory structure:"
                         dir /s
@@ -89,7 +88,7 @@ pipeline {
                 bat '''
                     echo "Listing running containers:"
                     docker ps
-                    echo "Listing all containers:"
+                    echo "Listing all containers:" 
                     docker ps -a
                 '''
             }
